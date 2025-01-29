@@ -72,18 +72,18 @@ Create a new controller or use an existing one:
 
        if ($request->has('user_id')) {
                 $response = $this->firebaseService->sendNotificationToSingle(
-                    new User(),
+                    new User(), // The model that contains the fcm_token column 
                     $request->user_id,
                     $request->title,
                     $request->body,
-                    'fcm_token'
+                    'fcm_token'// the column name in your table || You can Add Your Column fcm_token here
                 );
             } else {
                 $response = $this->firebaseService->sendNotificationToAll(
-                    new User(),
+                    new User(), // The model that contains the fcm_token column 
                     $request->title,
                     $request->body,
-                    'fcm_token'
+                    'fcm_token' // the column name in your table || You can Add Your Column fcm_token here
                 );
             }
 
