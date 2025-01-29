@@ -1,6 +1,7 @@
 {
     "name": "sendfirebase/notificationphp",
     "description": "A package for sending Firebase notifications in Laravel.",
+    "license": "MIT",
     "type": "library",
     "autoload": {
       "psr-4": {
@@ -20,5 +21,5 @@
       ]
     }
   }
-  
+
   }
