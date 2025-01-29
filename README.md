@@ -14,7 +14,10 @@ composer require sendfirebase/notificationphp
 
 Run the following command to publish the firebase.php config file:
 
+```
 php artisan vendor:publish --provider="SendFireBaseNotificationPHP\Providers\FireBaseNotificationServiceProvider" --tag="config"
+
+```
 
 3. Configure Firebase Credentials
 
