@@ -1,0 +1,24 @@
+{
+    "name": "sendfirebase/notificationphp",
+    "description": "A package for sending Firebase notifications in Laravel.",
+    "type": "library",
+    "autoload": {
+      "psr-4": {
+        "SendFireBaseNotificationPHP\\": "src/"
+      }
+    },
+    "require": {
+      "php": "^7.4|^8.0|^8.1|^8.2|^8.3",
+      "google/apiclient": "^2.0",
+      "illuminate/support": "^8.0|^9.0|^10.0|^11.0"
+    },
+
+   "extra": {
+    "laravel": {
+      "providers": [
+        "SendFireBaseNotificationPHP\\Providers\\FireBaseNotificationServiceProvider"
+      ]
+    }
+  }
+  
+  }
