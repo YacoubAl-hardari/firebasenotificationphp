@@ -22,24 +22,43 @@ class FirebaseNotificationService
         $this->repository = $repository;
     }
 
-    public function sendNotification(string $deviceToken, string $title, string $body)
+    protected function getAccessToken(): string
     {
-        // Initialize Google Client
         $client = new GoogleClient();
         $client->setAuthConfig($this->credentialsFile);
         $client->addScope('https://www.googleapis.com/auth/firebase.messaging');
         $client->refreshTokenWithAssertion();
 
-        // Get access token
-        $accessToken = $client->getAccessToken()['access_token'];
+        $accessToken = $client->getAccessToken();
 
-        // Prepare headers
+        if (!isset($accessToken['access_token'])) {
+            throw new \Exception('Failed to retrieve Firebase access token.');
+        }
+
+        return $accessToken['access_token'];
+    }
+
+    protected function sendFirebaseRequest(array $headers, array $payload)
+    {
+        $response = Http::withHeaders($headers)
+            ->post($this->fcmUrl, $payload);
+
+        if ($response->failed()) {
+            throw new \Exception("Firebase request failed: " . $response->body());
+        }
+
+        return $response->json();
+    }
+
+    public function sendNotification(string $deviceToken, string $title, string $body)
+    {
+        $accessToken = $this->getAccessToken();
+
         $headers = [
-            "Authorization: Bearer $accessToken",
-            'Content-Type: application/json',
+            "Authorization" => "Bearer $accessToken",
+            "Content-Type" => "application/json",
         ];
 
-        // Prepare payload
         $payload = [
             "message" => [
                 "token" => $deviceToken,
@@ -50,23 +69,7 @@ class FirebaseNotificationService
             ],
         ];
 
-        // Send notification via CURL
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->fcmUrl);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        $response = curl_exec($ch);
-        $error = curl_error($ch);
-        curl_close($ch);
-
-        if ($error) {
-            throw new \Exception("CURL Error: $error");
-        }
-
-        return json_decode($response, true);
+        return $this->sendFirebaseRequest($headers, $payload);
     }
 
     public function sendNotificationToAll(Model $model, string $title, string $body, string $tokenColumn = 'fcm_token')
@@ -88,10 +91,6 @@ class FirebaseNotificationService
 
     public function sendNotificationToSingle(Model $model, int $id, string $title, string $body, string $tokenColumn = 'fcm_token')
     {
-        if (is_null($id)) {
-            return ['success' => false, 'message' => 'Invalid user ID provided.'];
-        }
-
         $user = $this->repository->getUserWithTokenById($model, $id, $tokenColumn);
 
         if (!$user || empty($user->$tokenColumn)) {
@@ -101,5 +100,34 @@ class FirebaseNotificationService
         $response = $this->sendNotification($user->$tokenColumn, $title, $body);
 
         return ['success' => true, 'message' => 'Notification sent to the user.', 'response' => $response];
+    }
+
+    public function sendNotificationToTopic(string $topic, string $title, string $body)
+    {
+        $accessToken = $this->getAccessToken();
+
+        $headers = [
+            "Authorization" => "Bearer $accessToken",
+            "Content-Type" => "application/json",
+        ];
+
+        $payload = [
+            "message" => [
+                "topic" => $topic,
+                "notification" => [
+                    "title" => $title,
+                    "body" => $body,
+                ],
+                "apns" => [
+                    "payload" => [
+                        "aps" => [
+                            "sound" => "default",
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        return $this->sendFirebaseRequest($headers, $payload);
     }
 }
