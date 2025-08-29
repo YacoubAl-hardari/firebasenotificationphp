@@ -78,11 +78,10 @@ return [
 **1. Send a Notification to a Single User:**
 ```php
 use App\Models\User;
-use SendFireBaseNotificationPHP\FirebaseNotificationService;
 
 public function notifyUser(Request $request)
 {
-    $firebaseService = new FirebaseNotificationService();
+    $firebaseService = app(\SendFireBaseNotificationPHP\Services\FirebaseNotificationService::class);
     
     $response = $firebaseService->sendNotificationToSingle(
         new User(),          // User model instance
